@@ -1,6 +1,6 @@
 # rdbms-metadata-manager  
 Service for analyzing database schemas with the objective to automate the report of flaws and possible inconsistencies of differente kinds.
-Initially fully support for MySQL databases.
+Initially fully support for `MySQL databases`.
 
 ## Overview  
 
