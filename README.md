@@ -32,7 +32,7 @@ This document describes how to use the `app.py` script to identify and report po
 
 - Run the script inside the repository as follows to execute the container:
 ```bash       
-      docker run --env-file .env -v $(pwd)/exports:/app/exports rdbms-metadata-manager
+      docker run --env-file .env -v $(pwd)/exports-sample:/app/exports-sample rdbms-metadata-manager
 ```
 
 **Obs.** In case of containers (database + rdbms-metadata-manager) in the same local environment you'll need to create a docker network and run both using the "--network" flag as the example.  
@@ -73,4 +73,4 @@ Example of issues printed to the terminal:
 
 Example of csv file exported:
 
-[schema_issues.csv](exports/schema_issues.csv)
+[schema_issues.csv](exports-sample/schema_issues.csv)

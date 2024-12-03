@@ -16,7 +16,7 @@ RUN pip install python-dotenv
 COPY . .
 
 
-RUN mkdir -p exports
+RUN mkdir -p exports-sample
 
 
 ENV PYTHONUNBUFFERED=1
