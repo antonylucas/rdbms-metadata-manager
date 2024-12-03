@@ -74,4 +74,4 @@ Example of issues printed to the terminal:
 
 Example of csv file exported:
 
-[schema_issues.csv](exports-sample/schema_issues.csv)
+[ecommerce_db_schema_issues.csv](exports-sample/ecommerce_db_schema_issues.csv)
