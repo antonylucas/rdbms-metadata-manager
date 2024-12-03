@@ -2,14 +2,29 @@ import csv
 from sqlalchemy import create_engine, MetaData, inspect
 from dotenv import load_dotenv
 import os
+from urllib.parse import urlparse
 
-# Carregar variáveis de ambiente do arquivo .env
+
 load_dotenv()
 
-# Obter a URL de conexão do banco de dados a partir da variável de ambiente
+
 db_url = os.getenv("DB_URL")
 if not db_url:
-    raise ValueError("Database URL (DB_URL) not set. Please provide it in the .env file.")
+    raise ValueError("Connect String (DB_URL) not set. Please provide it in the .env file.")
+
+
+def get_database_name(db_url):
+    """
+    Extracts the database (schema) name from the SQLAlchemy connection string.
+    """
+    parsed_url = urlparse(db_url)
+
+    database_name = parsed_url.path.lstrip('/')
+    if database_name:
+        return database_name
+    raise ValueError("Could not extract database name from DB_URL.")
+
+database_name = get_database_name(db_url)
 
 # Function to detect schema flaws
 def detect_schema_flaws(engine):
@@ -21,7 +36,7 @@ def detect_schema_flaws(engine):
 
     inspector = inspect(engine)
 
-    # Loop through all tables
+    # Loop through all schema tables
     for table_name in metadata.tables.keys():
         # Get table metadata and indexes
         indexes = inspector.get_indexes(table_name)
@@ -33,17 +48,20 @@ def detect_schema_flaws(engine):
         # Get table columns
         table = metadata.tables[table_name]
 
-        # Rule 1: Check if 'email' column exists and is indexed
-        if 'email' in table.columns.keys() and 'email' not in indexed_columns:
-            issues.append({
-                "table": table_name,
-                "column": "email",
-                "issue type": "Query performance indexing",
-                "issue": f"The column 'email' in table '{table_name}' is not indexed.",
-                "recommendation": f"Add an index on '{table_name}(email)' to improve query performance."
-            })
+        # Rule 1: Detect large VARCHAR/TEXT columns without an index
+        for column in table.columns:
+            if column.type.__class__.__name__ in ["VARCHAR", "TEXT"] and \
+               hasattr(column.type, "length") and column.type.length and column.type.length >= 255 and \
+               column.name not in indexed_columns and not column.unique:
+                issues.append({
+                    "table": table_name,
+                    "column": column.name,
+                    "issue type": "Query performance - missing index",
+                    "issue": f"The column '{column.name}' in table '{table_name}' is a large VARCHAR/TEXT but is not indexed.",
+                    "recommendation": f"Consider adding an index on '{table_name}({column.name})' to improve query performance."
+                })
 
-        # Rule 2: Check for columns ending or starting with 'id' that are not foreign keys or indexes
+        # Rule 2: Check for columns ending or starting with 'id' that are not keys or indexes
         for column in table.columns:
             column_name = column.name.lower()
             if (column_name.endswith('id') or column_name.startswith('id')) and \
@@ -73,11 +91,13 @@ def detect_schema_flaws(engine):
                         "recommendation": f"Consider changing the data type of '{table_name}({column.name})' to DECIMAL or NUMERIC for better precision in monetary calculations."
                     })
 
-        # Rule 4: Check for columns in the dictionary with correct data types expected
+        # Rule 4: Check for columns in the metadata dictionary with correct data types expected
         for column in table.columns:
             # Dictionary to store columns and their expected types
             column_types = {
-                "rating": "FLOAT"
+                "rating": "FLOAT",
+                "created_at": "DATETIME",
+                "order_date": "DATETIME"
                 # Add more columns and their expected types if necessary
             }
 
@@ -97,7 +117,7 @@ def detect_schema_flaws(engine):
         # Rule 5: Check for columns that should not allow NULL values
         non_nullable_columns = [
             "email", "price", "total_amount", "order_date", "rating",
-            "username", "product_name"  # Add more columns based on your business logic
+            "username", "product_name" # Add more columns based on transactional rules and restrictions for the business
         ]
 
         for column in table.columns:
@@ -106,7 +126,7 @@ def detect_schema_flaws(engine):
                     issues.append({
                         "table": table_name,
                         "column": column.name,
-                        "issue type": "Data Integrity - NULL values",
+                        "issue type": "Data Integrity - not allowed NULL values",
                         "issue": f"The column '{column.name}' in table '{table_name}' allows NULL values, but it should not.",
                         "recommendation": f"Alter the column '{table_name}({column.name})' to NOT NULL to maintain data integrity."
                     })
@@ -114,8 +134,8 @@ def detect_schema_flaws(engine):
     return issues
 
 
-# Function to export issues to CSV
-def export_to_csv(issues, filename="exports/schema_issues.csv"):
+# Function to structure and export issues report to CSV
+def export_to_csv(issues, filename):
     header = ["Table", "Column", "Issue Type", "Issue", "Recommendation"]
 
     with open(filename, mode="w", newline="", encoding="utf-8") as file:
@@ -129,7 +149,6 @@ def export_to_csv(issues, filename="exports/schema_issues.csv"):
     print(f"Results have been exported to {filename}")
 
 
-# Main execution block
 if __name__ == "__main__":
     engine = create_engine(db_url)
 
@@ -137,7 +156,7 @@ if __name__ == "__main__":
         issues = detect_schema_flaws(engine)
 
         if issues:
-            print("Schema Issues Detected:")
+            print(f"Schema \"{database_name}\" issues detected:")
             for issue in issues:
                 print(f"Table: {issue['table']}")
                 print(f"Column: {issue['column']}")
@@ -145,13 +164,11 @@ if __name__ == "__main__":
                 print(f"Issue: {issue['issue']}")
                 print(f"Recommendation: {issue['recommendation']}\n")
 
-
-            # Verificar variável de ambiente para exportação
             export_to_csv_flag = os.getenv("EXPORT_TO_CSV", "NO").strip().upper()
 
             if export_to_csv_flag == "YES":
-                export_to_csv(issues)
+                export_to_csv(issues, filename=f"exports/{database_name}_schema_issues.csv")
             else:
                 print("No export selected.")
         else:
-            print("No schema issues detected!")
+            print(f"No issues detected in schema \"{database_name}\".")

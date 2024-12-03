@@ -26,13 +26,16 @@ This document describes how to use the `app.py` script to identify and report po
       docker build -t rdbms-metadata-manager .
 ```
 
-# Usage
+# Service Usage
 
-- Run the script inside the container as follows:
-      
-      docker run --env-file .env --network <docker_network> -v $(pwd)/exports:/app/exports metadata-manager
+- Run the script inside the repository as follows to execute the container:
+```bash       
+      docker run --env-file .env -v $(pwd)/exports:/app/exports rdbms-metadata-manager
+```
 
 **Obs.** In case of containers (database + rdbms-metadata-manager) in the same local environment you'll need to create a docker network and run both using the "--network" flag as the example.  
+      
+      docker run --env-file .env --network <docker_network> -v $(pwd)/exports:/app/exports rdbms-metadata-manager
 
 # Configuration Example
 
