@@ -18,7 +18,9 @@ This document describes how to use the `app.py` script to identify and report po
 
     
     DB_URL=mysql+pymysql://user:password@host:port/database
+    
     EXPORT_TO_CSV=YES
+
 
 - Ensure the database is accessible on the network.
 - Build the Docker image and start the container using the following command:
