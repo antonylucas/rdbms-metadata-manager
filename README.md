@@ -18,16 +18,16 @@ This document describes how to use the `app.py` script to identify and report po
 - Create a `.env` file with the database connection URI in the project directory and configure for "YES" or "NO" if you want export the results to a CSV file. Example:  
 
     
-    DB_URL=mysql+pymysql://user:password@host:port/database
+       DB_URL=mysql+pymysql://user:password@host:port/database
     
-    EXPORT_TO_CSV=YES
-
+       EXPORT_TO_CSV=YES
+  
 OR
     
 
-    DB_URL=postgresql+psycopg2://user:password@host:port/database
+       DB_URL=postgresql+psycopg2://user:password@host:port/database
 
-    EXPORT_TO_CSV=YES
+       EXPORT_TO_CSV=YES
 
    
 
