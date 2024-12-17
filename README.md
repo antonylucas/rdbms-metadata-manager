@@ -1,13 +1,13 @@
 # rdbms-metadata-manager  
 Service for analyzing database schemas with the objective to automate the report of flaws and possible inconsistencies of differente kinds.
-Initially fully support for `MySQL databases`.
+Initially fully support for `MySQL` and `PostgreSQL` databases.
 
 ## Overview  
 
 This document describes how to use the `app.py` script to identify and report potential issues in a database schema. This script is designed to automate the process of schema analysis and generate reports with recommendations related to:
 * Normalization issues like no referential integrity between data objects
-* Peformance issues related to querying data
-* Column data type mismach and lack of precision
+* Peformance issues related to querying data without indexed columns
+* Column data type mismach and lack of precision related a definied scope
 
 ## Architecture Proposal
 
@@ -21,6 +21,15 @@ This document describes how to use the `app.py` script to identify and report po
     DB_URL=mysql+pymysql://user:password@host:port/database
     
     EXPORT_TO_CSV=YES
+
+OR
+    
+
+    DB_URL=postgresql+psycopg2://user:password@host:port/database
+
+    EXPORT_TO_CSV=YES
+
+   
 
 
 - Ensure the database is accessible on the network.
@@ -45,6 +54,11 @@ This document describes how to use the `app.py` script to identify and report po
 - Make sure to adjust the .env file to match your database connection details. Example:
 
       DB_URL=mysql+pymysql://root:system@challenge-mysql:3306/ecommerce_db
+      EXPORT_TO_CSV=YES
+    
+  OR
+
+      DB_URL=postgresql+psycopg2://user:password@host:port/database
       EXPORT_TO_CSV=YES
 
 # Output
